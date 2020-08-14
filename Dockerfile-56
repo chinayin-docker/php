@@ -23,7 +23,7 @@ RUN set -eux; \
         libz-dev libmemcached-dev libssl-dev libmcrypt-dev \
         libjpeg-dev libpng-dev libwebp-dev libfreetype6-dev \
         libonig-dev libyaml-dev \
-        curl; \
+        inetutils-ping curl; \
     pecl channel-update pecl.php.net; \
     # Docker ext install
     docker-php-ext-install mcrypt pdo_mysql mysqli; \
