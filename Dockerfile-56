@@ -5,32 +5,44 @@
 #
 
 FROM php:5.6-fpm
-LABEL maintainer="lei <whereismoney@qq.com>"
-ENV DEBIAN_FRONTEND noninteractive
+LABEL maintainer="chinayin <whereismoney@qq.com>" Version="5.6"
+ENV DEBIAN_FRONTEND=noninteractive FPM_IMAGE_VERSION="2020-08-14 14:48"
+
+ARG CHANGE_SOURCE=true
+ARG TIMEZONE=Asia/Shanghai
+RUN if [ ${CHANGE_SOURCE} = true ]; then \
+    sed -i 's/deb.debian.org/mirrors.aliyun.com/' /etc/apt/sources.list && \
+    sed -i 's/security.debian.org/mirrors.aliyun.com/' /etc/apt/sources.list && \
+    sed -i 's/security-cdn.debian.org/mirrors.aliyun.com/' /etc/apt/sources.list \
+;fi && cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime && echo "${TIMEZONE}" > /etc/timezone;
 
 RUN set -eux; \
     apt-get update; \
     apt-get upgrade -y; \
     apt-get install -y --no-install-recommends \
-            curl \
-            libmemcached-dev \
-            libz-dev \
-            libpq-dev \
-            libjpeg-dev \
-            libpng-dev \
-            libfreetype6-dev \
-            libssl-dev \
-            libmcrypt-dev; \
-    # cleanup
-    rm -rf /var/lib/apt/lists/*
-
-RUN set -eux; \
-    docker-php-ext-install mcrypt; \
-    docker-php-ext-install pdo_mysql mysqli; \
-    docker-php-ext-install pdo_pgsql; \
-    docker-php-ext-configure gd \
-            --enable-gd-native-ttf \
-            --with-jpeg-dir=/usr/lib \
-            --with-freetype-dir=/usr/include/freetype2; \
+        libz-dev libmemcached-dev libssl-dev libmcrypt-dev \
+        libjpeg-dev libpng-dev libwebp-dev libfreetype6-dev \
+        libonig-dev libyaml-dev \
+        curl; \
+    pecl channel-update pecl.php.net; \
+    # Docker ext install
+    docker-php-ext-install mcrypt pdo_mysql mysqli; \
+    docker-php-ext-install fileinfo exif; \
+    docker-php-ext-configure gd --enable-gd-native-ttf --with-jpeg-dir=/usr/lib --with-freetype-dir=/usr/include/freetype2; \
     docker-php-ext-install gd; \
-    php -r 'var_dump(gd_info());'
+    # Pecl install
+    pecl install yaml && docker-php-ext-enable yaml; \
+    pecl install -o -f redis && docker-php-ext-enable redis; \
+    pecl install mongodb && docker-php-ext-enable mongodb; \
+    pecl install memcached && docker-php-ext-enable memcached; \
+    # Clean up
+    pecl clear-cache && apt-get clean; \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && rm /var/log/lastlog /var/log/faillog; \
+    # Check PHP version
+    php -v | head -n 1 | grep -q "PHP ${PHP_VERSION}";
+
+# Configure non-root user.
+ARG PUID=1000
+ARG PGID=1000
+ENV PUID=${PUID} PGID=${PGID}
+RUN groupmod -o -g ${PGID} www-data && usermod -o -u ${PUID} -g www-data www-data
