@@ -22,20 +22,20 @@ RUN set -eux; \
     apt-get install -y --no-install-recommends \
         libz-dev libmemcached-dev libssl-dev libmcrypt-dev \
         libjpeg-dev libpng-dev libwebp-dev libfreetype6-dev \
-        libonig-dev libyaml-dev \
+        libonig-dev libyaml-dev uuid-dev \
         inetutils-ping curl; \
     pecl channel-update pecl.php.net; \
     # Docker ext install
-    docker-php-ext-install pdo_mysql; \
-    docker-php-ext-install fileinfo exif; \
+    docker-php-ext-install pdo_mysql fileinfo exif; \
     docker-php-ext-configure gd --prefix=/usr --with-gd --with-webp-dir --with-jpeg-dir --with-png-dir --with-zlib-dir --with-freetype-dir; \
     docker-php-ext-install gd; \
     # Pecl install
-    pecl install uuid && docker-php-ext-enable uuid; \
-    pecl install yaml && docker-php-ext-enable yaml; \
-    pecl install -o -f redis && docker-php-ext-enable redis; \
-    pecl install mongodb && docker-php-ext-enable mongodb; \
-    pecl install memcached && docker-php-ext-enable memcached; \
+    pecl install uuid; docker-php-ext-enable uuid; \
+    pecl install yaml; docker-php-ext-enable yaml; \
+    pecl install -o -f redis; docker-php-ext-enable redis; \
+    pecl install mongodb; docker-php-ext-enable mongodb; \
+    pecl install igbinary msgpack; \
+    pecl install memcached; docker-php-ext-enable memcached; \
     # Clean up
     pecl clear-cache && apt-get clean; \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && rm /var/log/lastlog /var/log/faillog; \

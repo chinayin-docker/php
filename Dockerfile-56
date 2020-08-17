@@ -22,20 +22,19 @@ RUN set -eux; \
     apt-get install -y --no-install-recommends \
         libz-dev libmemcached-dev libssl-dev libmcrypt-dev \
         libjpeg-dev libpng-dev libwebp-dev libfreetype6-dev \
-        libonig-dev libyaml-dev \
+        libonig-dev libyaml-dev uuid-dev \
         inetutils-ping curl; \
     pecl channel-update pecl.php.net; \
     # Docker ext install
-    docker-php-ext-install mcrypt pdo_mysql mysqli; \
-    docker-php-ext-install fileinfo exif; \
+    docker-php-ext-install mcrypt pdo_mysql mysqli fileinfo exif; \
     docker-php-ext-configure gd --enable-gd-native-ttf --with-jpeg-dir=/usr/lib --with-freetype-dir=/usr/include/freetype2; \
     docker-php-ext-install gd; \
     # Pecl install
-    pecl install uuid && docker-php-ext-enable uuid; \
-    pecl install yaml && docker-php-ext-enable yaml; \
-    pecl install -o -f redis && docker-php-ext-enable redis; \
-    pecl install mongodb && docker-php-ext-enable mongodb; \
-    pecl install memcached && docker-php-ext-enable memcached; \
+    pecl install uuid-1.0.5; docker-php-ext-enable uuid; \
+    pecl install -o -f redis; docker-php-ext-enable redis; \
+    pecl install mongodb; docker-php-ext-enable mongodb; \
+    pecl install igbinary msgpack; \
+    pecl install memcached; docker-php-ext-enable memcached; \
     # Clean up
     pecl clear-cache && apt-get clean; \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && rm /var/log/lastlog /var/log/faillog; \
