@@ -31,10 +31,10 @@ RUN set -eux; \
     docker-php-ext-install gd; \
     # Pecl install
     pecl install uuid-1.0.5; docker-php-ext-enable uuid; \
-    pecl install -o -f redis; docker-php-ext-enable redis; \
-    pecl install mongodb; docker-php-ext-enable mongodb; \
-    pecl install igbinary msgpack; \
-    pecl install memcached; docker-php-ext-enable memcached; \
+    pecl install -o -f redis-4.3.0; docker-php-ext-enable redis; \
+    pecl install mongodb-1.7.5; docker-php-ext-enable mongodb; \
+    pecl install igbinary-2.0.8 msgpack-0.5.7; \
+    pecl install memcached-2.1.0; docker-php-ext-enable memcached; \
     # Clean up
     pecl clear-cache && apt-get clean; \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && rm /var/log/lastlog /var/log/faillog; \
