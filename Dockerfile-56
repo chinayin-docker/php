@@ -16,32 +16,36 @@ RUN if [ ${CHANGE_SOURCE} = true ]; then \
     sed -i 's/security-cdn.debian.org/mirrors.aliyun.com/' /etc/apt/sources.list \
 ;fi && cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime && echo "${TIMEZONE}" > /etc/timezone;
 
-RUN set -eux; \
-    apt-get update; \
-    apt-get upgrade -y; \
-    apt-get install -y --no-install-recommends \
-        libz-dev libmemcached-dev libssl-dev libmcrypt-dev \
-        libjpeg-dev libpng-dev libwebp-dev libfreetype6-dev \
-        libonig-dev libyaml-dev uuid-dev \
-        inetutils-ping curl; \
-    pecl channel-update pecl.php.net; \
-    # Docker ext install
-    docker-php-ext-install mcrypt pdo_mysql mysqli fileinfo exif; \
-    docker-php-ext-configure gd --enable-gd-native-ttf --with-jpeg-dir=/usr/lib --with-freetype-dir=/usr/include/freetype2; \
-    docker-php-ext-install gd; \
-    # Pecl install
-    pecl install uuid-1.0.5; docker-php-ext-enable uuid; \
-    pecl install -o -f redis-4.3.0; docker-php-ext-enable redis; \
-    pecl install mongodb-1.7.5; docker-php-ext-enable mongodb; \
-    pecl install igbinary-2.0.8 msgpack-0.5.7; \
-    pecl install memcached-2.1.0; docker-php-ext-enable memcached; \
-    # Clean up
-    pecl clear-cache && apt-get clean; \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && rm /var/log/lastlog /var/log/faillog; \
-    # Check PHP version
-    php -v | head -n 1 | grep -q "PHP ${PHP_VERSION}";
+RUN set -eux \
+    && apt-get update \
+    && apt-get upgrade -y \
+    && apt-get install -y --no-install-recommends \
+        curl iputils-ping telnet vim \
+        apt-utils libssl-dev libmcrypt-dev \
+    && pecl channel-update pecl.php.net \
+    ## Install extensions
+    && docker-php-ext-install mcrypt pdo_mysql mysqli fileinfo exif \
+    ## Install gd
+    && apt-get install -y --no-install-recommends libjpeg-dev libpng-dev libwebp-dev libfreetype6-dev \
+    && docker-php-ext-configure gd --enable-gd-native-ttf --with-jpeg-dir=/usr/lib --with-freetype-dir=/usr/include/freetype2 \
+    && docker-php-ext-install gd \
+    ## Install uuid
+    && apt-get install -y --no-install-recommends uuid-dev && pecl install uuid-1.0.5 && docker-php-ext-enable uuid \
+    ## Install redis
+    && pecl install -o -f redis-4.3.0 && docker-php-ext-enable redis \
+    ## Install mongodb
+    && pecl install mongodb-1.7.5 && docker-php-ext-enable mongodb \
+    ## Install memcached
+    && apt-get install -y --no-install-recommends libmemcached-dev \
+    && pecl install igbinary-2.0.8 msgpack-0.5.7 memcached-2.1.0 && docker-php-ext-enable memcached \
+    ## Clean up
+    && pecl clear-cache && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+    && rm /var/log/lastlog /var/log/faillog \
+    ## Check PHP version
+    && php -v | head -n 1 | grep -q "PHP ${PHP_VERSION}"
 
-# Configure non-root user.
+## Configure non-root user.
 ARG PUID=1000
 ARG PGID=1000
 ENV PUID=${PUID} PGID=${PGID}
