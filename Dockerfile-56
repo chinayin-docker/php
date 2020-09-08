@@ -6,7 +6,7 @@
 
 FROM php:5.6-fpm
 LABEL maintainer="chinayin <whereismoney@qq.com>" Version="5.6"
-ENV DEBIAN_FRONTEND=noninteractive FPM_IMAGE_VERSION="2020-08-14 14:48"
+ENV DEBIAN_FRONTEND=noninteractive FPM_IMAGE_VERSION="2020-09-08 14:48"
 
 ARG CHANGE_SOURCE=true
 ARG TIMEZONE=Asia/Shanghai
@@ -24,11 +24,11 @@ RUN set -eux \
         apt-utils libssl-dev libmcrypt-dev \
     && pecl channel-update pecl.php.net \
     ## Install extensions
-    && docker-php-ext-install mcrypt pdo_mysql mysqli fileinfo exif \
+    && docker-php-ext-install -j$(nproc) mcrypt pdo_mysql mysqli fileinfo exif \
     ## Install gd
     && apt-get install -y --no-install-recommends libjpeg-dev libpng-dev libwebp-dev libfreetype6-dev \
     && docker-php-ext-configure gd --enable-gd-native-ttf --with-jpeg-dir=/usr/lib --with-freetype-dir=/usr/include/freetype2 \
-    && docker-php-ext-install gd \
+    && docker-php-ext-install -j$(nproc) gd \
     ## Install uuid
     && apt-get install -y --no-install-recommends uuid-dev && pecl install uuid-1.0.5 && docker-php-ext-enable uuid \
     ## Install redis
