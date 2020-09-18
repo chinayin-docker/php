@@ -20,8 +20,8 @@ RUN set -eux \
     && apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
-        curl iputils-ping telnet vim \
-        apt-utils libssl-dev libmcrypt-dev \
+        curl iputils-ping telnet vim apt-utils net-tools procps \
+        libssl-dev libmcrypt-dev \
     && pecl channel-update pecl.php.net \
     ## Install extensions
     && docker-php-ext-install -j$(nproc) mcrypt pdo_mysql mysqli fileinfo exif \
