@@ -6,7 +6,7 @@
 
 FROM php:7.2-fpm
 LABEL maintainer="chinayin <whereismoney@qq.com>" Version="7.2"
-ENV DEBIAN_FRONTEND=noninteractive FPM_IMAGE_VERSION="2020-10-28 20:53"
+ENV DEBIAN_FRONTEND=noninteractive FPM_IMAGE_VERSION="2020-10-30 17:10"
 
 ARG CHANGE_SOURCE=true
 ARG TIMEZONE=Asia/Shanghai
@@ -23,12 +23,12 @@ RUN set -eux \
     && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
         curl iputils-ping wget telnet vim apt-utils net-tools procps unzip \
-        libssl-dev libmcrypt-dev \
+        libssl-dev libmcrypt-dev libzip-dev \
     ## alias
     && printf "alias ls='ls --color=auto'\nalias ll='ls -l --color=auto'\nalias l='ls -lA --color=auto'" >> /root/.bashrc \
     && pecl channel-update pecl.php.net \
     ## Install extensions
-    && docker-php-ext-install -j$(nproc) pdo_mysql fileinfo exif \
+    && docker-php-ext-install -j$(nproc) pdo_mysql fileinfo exif zip bcmath\
     ## Install gd
     && apt-get install -y --no-install-recommends libjpeg-dev libpng-dev libwebp-dev libfreetype6-dev \
     && docker-php-ext-configure gd --prefix=/usr --with-gd --with-webp-dir --with-jpeg-dir --with-png-dir --with-zlib-dir --with-freetype-dir \
