@@ -6,7 +6,7 @@
 
 FROM php:7.2-fpm
 LABEL maintainer="chinayin <whereismoney@qq.com>" Version="7.2"
-ENV DEBIAN_FRONTEND=noninteractive FPM_IMAGE_VERSION="2020-10-30 17:10"
+ENV DEBIAN_FRONTEND=noninteractive FPM_IMAGE_VERSION="2020-11-25 10:40"
 
 ARG CHANGE_SOURCE=true
 ARG TIMEZONE=Asia/Shanghai
@@ -22,7 +22,7 @@ RUN set -eux \
     && apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
-        curl iputils-ping wget telnet vim apt-utils net-tools procps unzip \
+        curl iputils-ping wget telnet vim apt-utils net-tools procps unzip dnsutils \
         libssl-dev libmcrypt-dev libzip-dev \
     ## alias
     && printf "alias ls='ls --color=auto'\nalias ll='ls -l --color=auto'\nalias l='ls -lA --color=auto'" >> /root/.bashrc \
