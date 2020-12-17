@@ -4,9 +4,9 @@
 #--------------------------------------------------------------------------
 #
 
-FROM php:7.2.33-fpm
-LABEL maintainer="chinayin <whereismoney@qq.com>" Version="7.2"
-ENV DEBIAN_FRONTEND=noninteractive FPM_IMAGE_VERSION="2020-12-16 17:52"
+FROM php:7.2.34-fpm
+LABEL maintainer="chinayin <whereismoney@qq.com>" Version="7.2.34"
+ENV DEBIAN_FRONTEND=noninteractive FPM_IMAGE_VERSION="2020-12-17 16:54"
 
 ARG CHANGE_SOURCE=true
 ARG TIMEZONE=Asia/Shanghai
@@ -29,10 +29,18 @@ RUN set -eux \
     && pecl channel-update pecl.php.net \
     ## Install extensions
     && docker-php-ext-install -j$(nproc) pdo_mysql fileinfo exif zip bcmath\
+    ## Install gd
+    && apt-get install -y --no-install-recommends libjpeg-dev libpng-dev libwebp-dev libfreetype6-dev \
+    && docker-php-ext-configure gd --prefix=/usr --with-gd --with-webp-dir --with-jpeg-dir --with-png-dir --with-zlib-dir --with-freetype-dir \
+    && docker-php-ext-install -j$(nproc) gd \
     ## Install uuid
     && apt-get install -y --no-install-recommends uuid-dev && pecl install uuid && docker-php-ext-enable uuid \
+    ## Install yaml
+    && apt-get install -y --no-install-recommends libyaml-dev && pecl install yaml && docker-php-ext-enable yaml \
     ## Install redis
     && pecl install -o -f redis && docker-php-ext-enable redis \
+    ## Install mongodb
+    && pecl install mongodb && docker-php-ext-enable mongodb \
     ## Install memcached
     && apt-get install -y --no-install-recommends libmemcached-dev && pecl install igbinary msgpack memcached && docker-php-ext-enable memcached \
     ## Install aliyun arms
