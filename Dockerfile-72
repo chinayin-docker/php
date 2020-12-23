@@ -40,7 +40,7 @@ RUN set -eux \
     ## Clean up
     && pecl clear-cache && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /var/cache/apk/* /tmp/* /var/tmp/* \
-    && rm /var/log/lastlog /var/log/faillog \
+    && rm -f /var/log/lastlog /var/log/faillog \
     ## Check PHP version
     && php -v | head -n 1 | grep -q "PHP ${PHP_VERSION}"
 
