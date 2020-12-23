@@ -40,7 +40,7 @@ RUN set -eux \
     && pecl install igbinary-2.0.8 msgpack-0.5.7 memcached-2.1.0 && docker-php-ext-enable memcached \
     ## Clean up
     && pecl clear-cache && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+    && rm -rf /var/lib/apt/lists/* /var/cache/apk/* /tmp/* /var/tmp/* \
     && rm /var/log/lastlog /var/log/faillog \
     ## Check PHP version
     && php -v | head -n 1 | grep -q "PHP ${PHP_VERSION}"
@@ -50,3 +50,5 @@ ARG PUID=1000
 ARG PGID=1000
 ENV PUID=${PUID} PGID=${PGID}
 RUN groupmod -o -g ${PGID} www-data && usermod -o -u ${PUID} -g www-data www-data
+
+USER www-data
