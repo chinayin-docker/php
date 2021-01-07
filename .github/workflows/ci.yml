@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         php_version: [56, 72, 74]
@@ -19,7 +19,7 @@ jobs:
           PHP_VERSION: ${{ matrix.php_version }}
         run: |
           export TAG_VERSION=${PHP_VERSION:0:1}.${PHP_VERSION:1:1}
-          docker build . --file Dockerfile-${{ matrix.php_version }} --tag chinayin/php-fpm:${TAG_VERSION}
+          docker build . --file ${{ matrix.php_version }}/Dockerfile --tag chinayin/php-fpm:${TAG_VERSION}
           docker image ls
 
       - name: Push image to Docker hub
