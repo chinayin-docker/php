@@ -17,12 +17,11 @@ RUN if [ ${CHANGE_SOURCE} = true ]; then \
 ;fi && cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime && echo "${TIMEZONE}" > /etc/timezone;
 
 RUN set -eux \
-    && apt-get update \
-    && apt-get upgrade -y \
+    && apt-get update && apt-get autoremove -y && apt-mark hold tzdata && apt-get upgrade -y \
+    && pecl channel-update pecl.php.net \
     && apt-get install -y --no-install-recommends \
         curl iputils-ping telnet vim apt-utils net-tools procps \
         libssl-dev libmcrypt-dev \
-    && pecl channel-update pecl.php.net \
     ## Install extensions
     && docker-php-ext-install -j$(nproc) mcrypt pdo_mysql mysqli fileinfo exif \
     ## Install gd

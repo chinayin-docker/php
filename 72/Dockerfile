@@ -4,9 +4,9 @@
 #--------------------------------------------------------------------------
 #
 
-FROM php:7.4-fpm
-LABEL maintainer="chinayin <whereismoney@qq.com>" Version="7.4"
-ENV DEBIAN_FRONTEND=noninteractive FPM_IMAGE_VERSION="2020-12-16 17:52"
+FROM php:7.2.34-fpm
+LABEL maintainer="chinayin <whereismoney@qq.com>" Version="7.2.34"
+ENV DEBIAN_FRONTEND=noninteractive FPM_IMAGE_VERSION="2020-12-17 18:02"
 
 ARG CHANGE_SOURCE=true
 ARG TIMEZONE=Asia/Shanghai
@@ -16,14 +16,15 @@ RUN if [ ${CHANGE_SOURCE} = true ]; then \
     sed -i 's/security-cdn.debian.org/mirrors.aliyun.com/' /etc/apt/sources.list \
 ;fi && cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime && echo "${TIMEZONE}" > /etc/timezone;
 
+COPY files/arms/72 /usr/local/arms/arms-php-agent
+
 RUN set -eux \
-    && apt-get update \
-    && apt-get upgrade -y \
+    && apt-get update && apt-get autoremove -y && apt-mark hold tzdata && apt-get upgrade -y \
+    ## alias
+    && printf "alias ls='ls --color=auto'\nalias ll='ls -l --color=auto'\nalias l='ls -lA --color=auto'" >> /root/.bashrc \
     && apt-get install -y --no-install-recommends \
         curl iputils-ping wget telnet vim apt-utils net-tools procps unzip dnsutils \
         libssl-dev libmcrypt-dev libzip-dev \
-    ## alias
-    && printf "alias ls='ls --color=auto'\nalias ll='ls -l --color=auto'\nalias l='ls -lA --color=auto'" >> /root/.bashrc \
     && pecl channel-update pecl.php.net \
     ## Install extensions
     && docker-php-ext-install -j$(nproc) pdo_mysql fileinfo exif zip bcmath\
@@ -33,6 +34,8 @@ RUN set -eux \
     && pecl install -o -f redis && docker-php-ext-enable redis \
     ## Install memcached
     && apt-get install -y --no-install-recommends libmemcached-dev && pecl install igbinary msgpack memcached && docker-php-ext-enable memcached \
+    ## Install aliyun arms
+    && mv /usr/local/arms/arms-php-agent/arms.ini /usr/local/etc/php/conf.d/arms.ini \
     ## Clean up
     && pecl clear-cache && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /var/cache/apk/* /tmp/* /var/tmp/* \
