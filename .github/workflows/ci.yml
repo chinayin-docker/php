@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        major: [ 7.2 ]
+        major: [ 7.2, 7.4 ]
         os: [ buster ]
         variant: [ fpm, cli ]
     steps:
@@ -42,7 +42,7 @@ jobs:
     needs: build
     strategy:
       matrix:
-        major: [ 7.2 ]
+        major: [ 7.2, 7.4 ]
         os: [ slim ]
         variant: [ fpm, cli ]
     steps:
