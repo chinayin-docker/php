@@ -5,10 +5,6 @@
 #
 
 FROM chinayin/debian:buster-slim
-LABEL maintainer="chinayin <whereismoney@qq.com>"
-
-ENV CYD_APP_NAME="7.2-fpm" \
-    CYD_IMAGE_VERSION="7.2.34-slim-r1"
 
 # prevent Debian's PHP packages from being installed
 # https://github.com/docker-library/php/pull/542
