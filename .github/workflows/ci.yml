@@ -11,23 +11,56 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php_version: [56, 72, 74]
+        major: [ 7.2 ]
+        os: [ buster ]
+        variant: [ fpm, cli ]
     steps:
       - uses: actions/checkout@v2
       - name: Build the Docker image
-        env:
-          PHP_VERSION: ${{ matrix.php_version }}
+        working-directory: ${{ matrix.major }}/${{ matrix.os }}/${{ matrix.variant }}
         run: |
-          export TAG_VERSION=${PHP_VERSION:0:1}.${PHP_VERSION:1:1}
-          docker build . --file ${{ matrix.php_version }}/Dockerfile --tag chinayin/php-fpm:${TAG_VERSION}
-          docker image ls
-
+          docker build \
+          --pull \
+          --no-cache \
+          --file Dockerfile \
+          --tag chinayin/php:${{ matrix.major }}-${{ matrix.variant }} \
+          --tag chinayin/php:${{ matrix.major }}-${{ matrix.variant }}-${{ matrix.os }} \
+          --tag chinayin/php:$(grep -oE 'PHP_VERSION [0-9].[0-9]+.[0-9]+' Dockerfile | grep -oE '[0-9].[0-9]+.[0-9]+')-${{ matrix.variant }} \
+          .
       - name: Push image to Docker hub
         if: success()
-        env:
-          PHP_VERSION: ${{ matrix.php_version }}
+        working-directory: ${{ matrix.major }}/${{ matrix.os }}/${{ matrix.variant }}
         run: |
-          export TAG_VERSION=${PHP_VERSION:0:1}.${PHP_VERSION:1:1}
-          echo ${{ secrets.DOCKER_HUB_PASSWORD }} | docker login -u ${{ secrets.DOCKER_HUB_USER }} --password-stdin
-          docker push chinayin/php-fpm:${TAG_VERSION}
+          echo ${{ secrets.DOCKER_HUB_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USER }} --password-stdin
+          docker push chinayin/php:${{ matrix.major }}-${{ matrix.variant }}
+          docker push chinayin/php:${{ matrix.major }}-${{ matrix.variant }}-${{ matrix.os }}
+          docker push chinayin/php:$(grep -oE 'PHP_VERSION [0-9].[0-9]+.[0-9]+' Dockerfile | grep -oE '[0-9].[0-9]+.[0-9]+')-${{ matrix.variant }}
+          docker logout
+
+  build-slim:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        major: [ 7.2 ]
+        os: [ slim ]
+        variant: [ fpm, cli ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build the Docker image
+        working-directory: ${{ matrix.major }}/${{ matrix.os }}/${{ matrix.variant }}
+        run: |
+          docker build \
+          --pull \
+          --no-cache \
+          --file Dockerfile \
+          --tag chinayin/php:${{ matrix.major }}-${{ matrix.variant }}-${{ matrix.os }} \
+          --tag chinayin/php:$(grep -oE 'PHP_VERSION [0-9].[0-9]+.[0-9]+' Dockerfile | grep -oE '[0-9].[0-9]+.[0-9]+')-${{ matrix.variant }}-${{ matrix.variant }} \
+          .
+      - name: Push image to Docker hub
+        if: success()
+        working-directory: ${{ matrix.major }}/${{ matrix.os }}/${{ matrix.variant }}
+        run: |
+          echo ${{ secrets.DOCKER_HUB_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USER }} --password-stdin
+          docker push chinayin/php:${{ matrix.major }}-${{ matrix.variant }}-${{ matrix.os }}
+          docker push chinayin/php:$(grep -oE 'PHP_VERSION [0-9].[0-9]+.[0-9]+' Dockerfile | grep -oE '[0-9].[0-9]+.[0-9]+')-${{ matrix.variant }}-${{ matrix.variant }}
           docker logout
