@@ -11,6 +11,12 @@ ENV PHP_VERSION 7.4.16 \
     CYD_APP_NAME="7.4-cli-slim" \
     CYD_IMAGE_VERSION="7.4.16-cli-slim-r1"
 
+## Configure non-root user.
+ARG PUID=1000
+ARG PGID=1000
+ENV PUID=${PUID} PGID=${PGID}
+RUN groupmod -o -g ${PGID} www-data && usermod -o -u ${PUID} -g www-data www-data
+
 RUN set -eux \
     ## install packages
     && install_packages \
