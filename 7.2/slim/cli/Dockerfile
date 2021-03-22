@@ -30,4 +30,4 @@ RUN set -eux \
     && rm -rf /tmp/* /var/tmp/* \
     && rm -f /var/log/lastlog /var/log/faillog \
     ## Check PHP version
-    && php -v | head -n 1 | grep -q "PHP ${PHP_VERSION}"
+    && php -v
