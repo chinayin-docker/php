@@ -39,6 +39,7 @@ jobs:
 
   build-slim:
     runs-on: ubuntu-latest
+    needs: build
     strategy:
       matrix:
         major: [ 7.2 ]
