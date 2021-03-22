@@ -18,13 +18,19 @@
 ![](https://img.shields.io/docker/v/chinayin/php/7.4-fpm-slim)
 ![](https://img.shields.io/docker/v/chinayin/php/7.4-cli-slim)
 
+### Image Variants
+
+- `php:<version>-cli`
+- `php:<version>-fpm`
+- `php:<version>-cli-slim`
+- `php:<version>-fpm-slim`
+
 ### Use PHP
 
 You can use the image directly, e.g.
 
 ```
 docker run --rm -it chinayin/php:7.2-fpm
-docker run --rm -it chinayin/php:7.2-cli
 ```
 
 The images are built daily and have the security release enabled, so will contain any security updates released more
@@ -34,7 +40,6 @@ You can also use the images as a base for your own Dockerfile:
 
 ```
 FROM chinayin/php:7.2-fpm
-FROM chinayin/php:7.2-cli
 ```
 
 ### Use PHP slim version
@@ -43,12 +48,10 @@ You can use the image directly, e.g.
 
 ```
 docker run --rm -it chinayin/php:7.2-fpm-slim
-docker run --rm -it chinayin/php:7.2-cli-slim
 ```
 
 You can also use the images as a base for your own Dockerfile:
 
 ```
 FROM chinayin/php:7.2-fpm-slim
-FROM chinayin/php:7.2-cli-slim
 ```
