@@ -55,7 +55,7 @@ jobs:
           --no-cache \
           --file Dockerfile \
           --tag chinayin/php:${{ matrix.major }}-${{ matrix.variant }}-${{ matrix.os }} \
-          --tag chinayin/php:$(grep -oE 'PHP_VERSION [0-9].[0-9]+.[0-9]+' Dockerfile | grep -oE '[0-9].[0-9]+.[0-9]+')-${{ matrix.variant }}-${{ matrix.variant }} \
+          --tag chinayin/php:$(grep -oE 'PHP_VERSION [0-9].[0-9]+.[0-9]+' Dockerfile | grep -oE '[0-9].[0-9]+.[0-9]+')-${{ matrix.variant }}-${{ matrix.os }} \
           .
       - name: Push image to Docker hub
         if: success()
@@ -63,5 +63,5 @@ jobs:
         run: |
           echo ${{ secrets.DOCKER_HUB_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USER }} --password-stdin
           docker push chinayin/php:${{ matrix.major }}-${{ matrix.variant }}-${{ matrix.os }}
-          docker push chinayin/php:$(grep -oE 'PHP_VERSION [0-9].[0-9]+.[0-9]+' Dockerfile | grep -oE '[0-9].[0-9]+.[0-9]+')-${{ matrix.variant }}-${{ matrix.variant }}
+          docker push chinayin/php:$(grep -oE 'PHP_VERSION [0-9].[0-9]+.[0-9]+' Dockerfile | grep -oE '[0-9].[0-9]+.[0-9]+')-${{ matrix.variant }}-${{ matrix.os }}
           docker logout

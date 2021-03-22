@@ -7,7 +7,7 @@
 FROM chinayin/php:7.2-fpm
 LABEL maintainer="chinayin <whereismoney@qq.com>"
 
-COPY files/arms/72 /usr/local/arms/arms-php-agent
+COPY files/arms /usr/local/arms/arms-php-agent
 
 RUN set -eux \
     ## install packages
