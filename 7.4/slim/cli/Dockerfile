@@ -18,11 +18,11 @@ ENV PUID=${PUID} PGID=${PGID}
 RUN groupmod -o -g ${PGID} www-data && usermod -o -u ${PUID} -g www-data www-data
 
 RUN set -eux \
+    && pecl channel-update pecl.php.net \
     ## install packages
     && install_packages \
         curl iputils-ping wget telnet vim apt-utils net-tools procps unzip dnsutils \
         libssl-dev libmcrypt-dev libzip-dev \
-    && pecl channel-update pecl.php.net \
     ## Install extensions
     && docker-php-ext-install -j$(nproc) pdo_mysql fileinfo exif zip bcmath\
     ## Install uuid
