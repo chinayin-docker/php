@@ -7,6 +7,10 @@
 FROM chinayin/php:7.2-fpm
 LABEL maintainer="chinayin <whereismoney@qq.com>"
 
+ENV PHP_VERSION 7.2.34 \
+    CYD_APP_NAME="7.2-fpm-slim" \
+    CYD_IMAGE_VERSION="7.2.34-slim-r1"
+
 COPY files/arms /usr/local/arms/arms-php-agent
 
 RUN set -eux \

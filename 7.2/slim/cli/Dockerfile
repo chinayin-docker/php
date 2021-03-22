@@ -7,6 +7,10 @@
 FROM chinayin/php:7.2-cli
 LABEL maintainer="chinayin <whereismoney@qq.com>"
 
+ENV PHP_VERSION 7.2.34 \
+    CYD_APP_NAME="7.2-cli-slim" \
+    CYD_IMAGE_VERSION="7.2.34-slim-r1"
+
 RUN set -eux \
     ## install packages
     && install_packages \
