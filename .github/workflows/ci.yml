@@ -2,7 +2,7 @@ name: Docker Image CI
 
 on:
   push:
-    branches: master
+    branches: [ master ]
   schedule:
     - cron: 0 0 * * *
 
@@ -15,13 +15,15 @@ jobs:
         os: [ buster ]
         variant: [ fpm, cli ]
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
       - name: Build the Docker image
+        env:
+          DOCKER_BUILDKIT: 1
         working-directory: ${{ matrix.major }}/${{ matrix.os }}/${{ matrix.variant }}
         run: |
           docker build \
           --pull \
-          --no-cache \
           --file Dockerfile \
           --tag chinayin/php:${{ matrix.major }}-${{ matrix.variant }} \
           --tag chinayin/php:${{ matrix.major }}-${{ matrix.variant }}-${{ matrix.os }} \
@@ -52,7 +54,6 @@ jobs:
         run: |
           docker build \
           --pull \
-          --no-cache \
           --file Dockerfile \
           --tag chinayin/php:${{ matrix.major }}-${{ matrix.variant }}-${{ matrix.os }} \
           --tag chinayin/php:$(grep -oE 'PHP_VERSION [0-9].[0-9]+.[0-9]+' Dockerfile | grep -oE '[0-9].[0-9]+.[0-9]+')-${{ matrix.variant }}-${{ matrix.os }} \
