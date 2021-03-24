@@ -18,9 +18,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Build the Docker image
+        working-directory: ${{ matrix.major }}/${{ matrix.os }}/${{ matrix.variant }}
         env:
           DOCKER_BUILDKIT: 1
-        working-directory: ${{ matrix.major }}/${{ matrix.os }}/${{ matrix.variant }}
         run: |
           docker build \
           --pull \
@@ -48,9 +48,12 @@ jobs:
         os: [ slim ]
         variant: [ fpm, cli ]
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
       - name: Build the Docker image
         working-directory: ${{ matrix.major }}/${{ matrix.os }}/${{ matrix.variant }}
+        env:
+          DOCKER_BUILDKIT: 1
         run: |
           docker build \
           --pull \
