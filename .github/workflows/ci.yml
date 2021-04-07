@@ -24,6 +24,7 @@ jobs:
         run: |
           echo ::set-output name=repository::${GITHUB_ACTOR}/$(basename ${GITHUB_REPOSITORY})
           echo ::set-output name=version::$(grep -oE 'PHP_VERSION [0-9].[0-9]+.[0-9]+' Dockerfile | grep -oE '[0-9].[0-9]+.[0-9]+')
+          echo ::set-output name=workdir::${{ matrix.major }}/${{ matrix.os }}/${{ matrix.variant }}
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
@@ -32,7 +33,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
-          context: ${{ matrix.major }}/${{ matrix.os }}/${{ matrix.variant }}
+          context: ${{ steps.vars.outputs.workdir }}
           pull: true
           push: true
           tags: |
@@ -56,6 +57,7 @@ jobs:
         run: |
           echo ::set-output name=repository::${GITHUB_ACTOR}/$(basename ${GITHUB_REPOSITORY})
           echo ::set-output name=version::$(grep -oE 'PHP_VERSION [0-9].[0-9]+.[0-9]+' Dockerfile | grep -oE '[0-9].[0-9]+.[0-9]+')
+          echo ::set-output name=workdir::${{ matrix.major }}/${{ matrix.os }}/${{ matrix.variant }}
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
@@ -64,7 +66,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
-          context: ${{ matrix.major }}/${{ matrix.os }}/${{ matrix.variant }}
+          context: ${{ steps.vars.outputs.workdir }}
           pull: true
           push: true
           tags: |
