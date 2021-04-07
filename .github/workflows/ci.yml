@@ -2,7 +2,8 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
   schedule:
     - cron: 0 0 * * *
 
@@ -17,28 +18,25 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Build the Docker image
-        working-directory: ${{ matrix.major }}/${{ matrix.os }}/${{ matrix.variant }}
-        env:
-          DOCKER_BUILDKIT: 1
+      - name: Set variables
+        id: vars
         run: |
-          docker build \
-          --pull \
-          --file Dockerfile \
-          --tag chinayin/php:${{ matrix.major }}-${{ matrix.variant }} \
-          --tag chinayin/php:${{ matrix.major }}-${{ matrix.variant }}-${{ matrix.os }} \
-          --tag chinayin/php:$(grep -oE 'PHP_VERSION [0-9].[0-9]+.[0-9]+' Dockerfile | grep -oE '[0-9].[0-9]+.[0-9]+')-${{ matrix.variant }} \
-          .
-      - name: Push image to Docker hub
-        if: success()
-        working-directory: ${{ matrix.major }}/${{ matrix.os }}/${{ matrix.variant }}
-        run: |
-          echo ${{ secrets.DOCKER_HUB_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USER }} --password-stdin
-          docker push chinayin/php:${{ matrix.major }}-${{ matrix.variant }}
-          docker push chinayin/php:${{ matrix.major }}-${{ matrix.variant }}-${{ matrix.os }}
-          docker push chinayin/php:$(grep -oE 'PHP_VERSION [0-9].[0-9]+.[0-9]+' Dockerfile | grep -oE '[0-9].[0-9]+.[0-9]+')-${{ matrix.variant }}
-          docker logout
-
+          echo ::set-output name=repository::${GITHUB_ACTOR}/$(basename ${GITHUB_REPOSITORY})
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: ${{ matrix.major }}/${{ matrix.os }}/${{ matrix.variant }}
+          pull: true
+          push: true
+          tags: |
+            ${{ steps.vars.outputs.repository }}:${{ matrix.major }}-${{ matrix.variant }}
+            ${{ steps.vars.outputs.repository }}:${{ matrix.major }}-${{ matrix.variant }}-${{ matrix.os }}
+            ${{ steps.vars.outputs.repository }}:$(grep -oE 'PHP_VERSION [0-9].[0-9]+.[0-9]+' Dockerfile | grep -oE '[0-9].[0-9]+.[0-9]+')-${{ matrix.variant }}
   build-slim:
     runs-on: ubuntu-latest
     needs: build
@@ -50,22 +48,21 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Build the Docker image
-        working-directory: ${{ matrix.major }}/${{ matrix.os }}/${{ matrix.variant }}
-        env:
-          DOCKER_BUILDKIT: 1
+      - name: Set variables
+        id: vars
         run: |
-          docker build \
-          --pull \
-          --file Dockerfile \
-          --tag chinayin/php:${{ matrix.major }}-${{ matrix.variant }}-${{ matrix.os }} \
-          --tag chinayin/php:$(grep -oE 'PHP_VERSION [0-9].[0-9]+.[0-9]+' Dockerfile | grep -oE '[0-9].[0-9]+.[0-9]+')-${{ matrix.variant }}-${{ matrix.os }} \
-          .
-      - name: Push image to Docker hub
-        if: success()
-        working-directory: ${{ matrix.major }}/${{ matrix.os }}/${{ matrix.variant }}
-        run: |
-          echo ${{ secrets.DOCKER_HUB_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USER }} --password-stdin
-          docker push chinayin/php:${{ matrix.major }}-${{ matrix.variant }}-${{ matrix.os }}
-          docker push chinayin/php:$(grep -oE 'PHP_VERSION [0-9].[0-9]+.[0-9]+' Dockerfile | grep -oE '[0-9].[0-9]+.[0-9]+')-${{ matrix.variant }}-${{ matrix.os }}
-          docker logout
+          echo ::set-output name=repository::${GITHUB_ACTOR}/$(basename ${GITHUB_REPOSITORY})
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: ${{ matrix.major }}/${{ matrix.os }}/${{ matrix.variant }}
+          pull: true
+          push: true
+          tags: |
+            ${{ steps.vars.outputs.repository }}:${{ matrix.major }}-${{ matrix.variant }}-${{ matrix.os }}
+            ${{ steps.vars.outputs.repository }}:$(grep -oE 'PHP_VERSION [0-9].[0-9]+.[0-9]+' Dockerfile | grep -oE '[0-9].[0-9]+.[0-9]+')-${{ matrix.variant }}-${{ matrix.os }}
