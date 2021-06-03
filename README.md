@@ -5,6 +5,8 @@
 ![Docker Image Size (latest semver)](https://img.shields.io/docker/image-size/chinayin/php?sort=semver)
 ![Docker Pulls](https://img.shields.io/docker/pulls/chinayin/php)
 
+While designed for web development, the PHP scripting language also provides general-purpose use.
+
 ### Supported tags and respective `Dockerfile` links
 
 ![](https://img.shields.io/docker/v/chinayin/php/7.2-fpm)
