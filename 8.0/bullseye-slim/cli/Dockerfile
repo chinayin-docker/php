@@ -95,7 +95,7 @@ RUN set -eux; \
 	apt-mark manual $savedAptMark > /dev/null; \
 	apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false
 
-COPY ../../../files/docker-php-source /usr/local/bin/
+COPY docker-php-source /usr/local/bin/
 
 RUN set -eux; \
 	\
