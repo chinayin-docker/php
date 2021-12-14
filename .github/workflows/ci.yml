@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         major: [ 7.2, 7.4 ]
-        os: [ buster ]
+        os: [ bullseye-slim ]
         variant: [ fpm, cli ]
     steps:
       - name: Checkout code
