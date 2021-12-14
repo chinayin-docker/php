@@ -52,7 +52,7 @@ jobs:
     needs: build
     strategy:
       matrix:
-        major: [ 7.2, 7.4 ]
+        major: [ 7.2, 7.4, 8.0 ]
         os: [ slim ]
         variant: [ fpm, cli ]
     steps:
