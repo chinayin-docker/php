@@ -25,8 +25,11 @@ RUN set -eux \
     && install_packages \
         curl iputils-ping wget telnet vim apt-utils net-tools procps unzip dnsutils \
         libssl-dev libmcrypt-dev libzip-dev \
+    ## Install PHP opcache
+    && docker-php-ext-configure opcache --enable-opcache && docker-php-ext-install -j$(nproc) opcache \
+    && echo "opcache.enable=0" >> "$PHP_INI_DIR/conf.d/docker-php-ext-opcache.ini" \
     ## Install extensions
-    && docker-php-ext-install -j$(nproc) pdo_mysql fileinfo exif zip bcmath\
+    && docker-php-ext-install -j$(nproc) pdo_mysql fileinfo exif zip bcmath \
     ## Install uuid
     && install_packages uuid-dev && pecl install uuid && docker-php-ext-enable uuid \
     ## Install redis
