@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        major: [ 7.2, 7.4, "8.0" ]
+        major: [ 7.4, "8.0" ]
         os: [ bullseye-slim ]
         variant: [ fpm, cli ]
     steps:
