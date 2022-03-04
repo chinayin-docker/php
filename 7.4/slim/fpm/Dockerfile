@@ -4,12 +4,12 @@
 #--------------------------------------------------------------------------
 #
 
-FROM chinayin/php:7.4.26-fpm
+FROM chinayin/php:7.4.28-fpm
 LABEL maintainer="chinayin <whereismoney@qq.com>"
 
-ENV PHP_VERSION 7.4.26 \
+ENV PHP_VERSION 7.4.28 \
     CYD_APP_NAME="7.4-fpm-slim" \
-    CYD_IMAGE_VERSION="7.4.26-bullseye-slim"
+    CYD_IMAGE_VERSION="7.4.28-bullseye-slim"
 
 ## Configure non-root user.
 ARG PUID=1000
