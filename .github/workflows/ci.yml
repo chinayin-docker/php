@@ -15,7 +15,7 @@ jobs:
         variant: [ fpm, cli ]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set variables
         id: vars
         working-directory: ${{ matrix.major }}/${{ matrix.os }}/${{ matrix.variant }}
@@ -59,7 +59,7 @@ jobs:
         variant: [ fpm, cli ]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set variables
         id: vars
         working-directory: ${{ matrix.major }}/${{ matrix.os }}/${{ matrix.variant }}
