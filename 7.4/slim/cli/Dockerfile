@@ -26,6 +26,8 @@ RUN set -eux \
       libssl-dev libmcrypt-dev libzip-dev \
   ## install all required dependencies
   && install_packages \
+    # yaml \
+      libyaml-dev \
     # uuid
       uuid-dev  \
     # memcached
@@ -38,6 +40,8 @@ RUN set -eux \
     && docker-php-ext-install -j$(nproc) opcache \
     && echo "opcache.enable=0" >> "$PHP_INI_DIR/conf.d/docker-php-ext-opcache.ini" \
   ) \
+  ## ext-yaml
+  && pecl install yaml && docker-php-ext-enable yaml \
   ## ext-uuid
   && pecl install uuid && docker-php-ext-enable uuid \
   ## ext-memcached
