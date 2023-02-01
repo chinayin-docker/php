@@ -39,7 +39,7 @@ jobs:
           cp -f files/docker-php-entrypoint-${{ matrix.variant }} ${{ steps.vars.outputs.workdir }}/docker-php-entrypoint
           tree ${{ steps.vars.outputs.workdir }}
       - name: Build and push
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         with:
           context: ${{ steps.vars.outputs.workdir }}
           pull: true
@@ -77,7 +77,7 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
       - name: Build and push
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         with:
           context: ${{ steps.vars.outputs.workdir }}
           pull: true
