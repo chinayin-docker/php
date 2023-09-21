@@ -9,7 +9,7 @@ LABEL maintainer="chinayin <whereismoney@qq.com>"
 
 ENV PHP_VERSION 8.0.30 \
     CYD_APP_NAME="8.0-cli-slim" \
-    CYD_IMAGE_VERSION="8.0.30-bookworm-slim"
+    CYD_IMAGE_VERSION="8.0.30-bullseye-slim"
 
 ## Configure non-root user.
 ARG PUID=1000
