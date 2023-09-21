@@ -1,39 +1,20 @@
 #!/bin/sh
 set -e
 
-# prefer user supplied CFLAGS, but default to our PHP_CFLAGS
-: ${CFLAGS:=$PHP_CFLAGS}
-: ${CPPFLAGS:=$PHP_CPPFLAGS}
-: ${LDFLAGS:=$PHP_LDFLAGS}
-export CFLAGS CPPFLAGS LDFLAGS
-
-srcExists=
-if [ -d /usr/src/php ]; then
-	srcExists=1
-fi
-docker-php-source extract
-if [ -z "$srcExists" ]; then
-	touch /usr/src/php/.docker-delete-me
-fi
-
-cd /usr/src/php/ext
+extDir="$(php -d 'display_errors=stderr' -r 'echo ini_get("extension_dir");')"
+cd "$extDir"
 
 usage() {
-	echo "usage: $0 [-jN] [--ini-name file.ini] ext-name [ext-name ...]"
+	echo "usage: $0 [options] module-name [module-name ...]"
 	echo "   ie: $0 gd mysqli"
 	echo "       $0 pdo pdo_mysql"
-	echo "       $0 -j5 gd mbstring mysqli pdo pdo_mysql shmop"
+	echo "       $0 --ini-name 0-apc.ini apcu apc"
 	echo
-	echo 'if custom ./configure arguments are necessary, see docker-php-ext-configure'
-	echo
-	echo 'Possible values for ext-name:'
-	find . \
-			-mindepth 2 \
-			-maxdepth 2 \
+	echo 'Possible values for module-name:'
+	find -maxdepth 1 \
 			-type f \
-			-name 'config.m4' \
-		| xargs -n1 dirname \
-		| xargs -n1 basename \
+			-name '*.so' \
+			-exec basename '{}' ';' \
 		| sort \
 		| xargs
 	echo
@@ -41,10 +22,9 @@ usage() {
 	echo 'the output of "php -i" to see which modules are already loaded.'
 }
 
-opts="$(getopt -o 'h?j:' --long 'help,ini-name:,jobs:' -- "$@" || { usage >&2 && false; })"
+opts="$(getopt -o 'h?' --long 'help,ini-name:' -- "$@" || { usage >&2 && false; })"
 eval set -- "$opts"
 
-j=1
 iniName=
 while true; do
 	flag="$1"
@@ -52,7 +32,6 @@ while true; do
 	case "$flag" in
 		--help|-h|'-?') usage && exit 0 ;;
 		--ini-name) iniName="$1" && shift ;;
-		--jobs|-j) j="$1" && shift ;;
 		--) break ;;
 		*)
 			{
@@ -64,21 +43,21 @@ while true; do
 	esac
 done
 
-exts=
-for ext; do
-	if [ -z "$ext" ]; then
+modules=
+for module; do
+	if [ -z "$module" ]; then
 		continue
 	fi
-	if [ ! -d "$ext" ]; then
-		echo >&2 "error: $PWD/$ext does not exist"
+	if ! [ -f "$module" ] && ! [ -f "$module.so" ]; then
+		echo >&2 "error: '$module' does not exist"
 		echo >&2
 		usage >&2
 		exit 1
 	fi
-	exts="$exts $ext"
+	modules="$modules $module"
 done
 
-if [ -z "$exts" ]; then
+if [ -z "$modules" ]; then
 	usage >&2
 	exit 1
 fi
@@ -90,54 +69,53 @@ fi
 
 apkDel=
 if [ "$pm" = 'apk' ]; then
-	if [ -n "$PHPIZE_DEPS" ]; then
-		if apk info --installed .phpize-deps-configure > /dev/null; then
-			apkDel='.phpize-deps-configure'
-		elif ! apk info --installed .phpize-deps > /dev/null; then
-			apk add --no-cache --virtual .phpize-deps $PHPIZE_DEPS
-			apkDel='.phpize-deps'
-		fi
+	if \
+		[ -n "$PHPIZE_DEPS" ] \
+		&& ! apk info --installed .phpize-deps > /dev/null \
+		&& ! apk info --installed .phpize-deps-configure > /dev/null \
+	; then
+		apk add --no-cache --virtual '.docker-php-ext-enable-deps' binutils
+		apkDel='.docker-php-ext-enable-deps'
 	fi
 fi
 
-popDir="$PWD"
-for ext in $exts; do
-	cd "$ext"
-
-	[ -e Makefile ] || docker-php-ext-configure "$ext"
-
-	make -j"$j"
-
-	if ! php -n -d 'display_errors=stderr' -r 'exit(ZEND_DEBUG_BUILD ? 0 : 1);' > /dev/null; then
-		# only "strip" modules if we aren't using a debug build of PHP
-		# (none of our builds are debug builds, but PHP might be recompiled with "--enable-debug" configure option)
-		# https://github.com/docker-library/php/issues/1268
-
-		find modules \
-			-maxdepth 1 \
-			-name '*.so' \
-			-exec sh -euxc ' \
-				strip --strip-all "$@" || :
-			' -- '{}' +
+for module in $modules; do
+	moduleFile="$module"
+	if [ -f "$module.so" ] && ! [ -f "$module" ]; then
+		moduleFile="$module.so"
+	fi
+	if readelf --wide --syms "$moduleFile" | grep -q ' zend_extension_entry$'; then
+		# https://wiki.php.net/internals/extensions#loading_zend_extensions
+		line="zend_extension=$module"
+	else
+		line="extension=$module"
 	fi
 
-	make -j"$j" install
+	ext="$(basename "$module")"
+	ext="${ext%.*}"
+	if php -d 'display_errors=stderr' -r 'exit(extension_loaded("'"$ext"'") ? 0 : 1);'; then
+		# this isn't perfect, but it's better than nothing
+		# (for example, 'opcache.so' presents inside PHP as 'Zend OPcache', not 'opcache')
+		echo >&2
+		echo >&2 "warning: $ext ($module) is already loaded!"
+		echo >&2
+		continue
+	fi
 
-	find modules \
-		-maxdepth 1 \
-		-name '*.so' \
-		-exec basename '{}' ';' \
-			| xargs -r docker-php-ext-enable ${iniName:+--ini-name "$iniName"}
-
-	make -j"$j" clean
-
-	cd "$popDir"
+	case "$iniName" in
+		/*)
+			# allow an absolute path
+			ini="$iniName"
+			;;
+		*)
+			ini="$PHP_INI_DIR/conf.d/${iniName:-"docker-php-ext-$ext.ini"}"
+			;;
+	esac
+	if ! grep -qFx -e "$line" -e "$line.so" "$ini" 2>/dev/null; then
+		echo "$line" >> "$ini"
+	fi
 done
 
 if [ "$pm" = 'apk' ] && [ -n "$apkDel" ]; then
 	apk del --no-network $apkDel
-fi
-
-if [ -e /usr/src/php/.docker-delete-me ]; then
-	docker-php-source delete
 fi
