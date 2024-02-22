@@ -60,9 +60,9 @@ ENV PHP_LDFLAGS="-Wl,-O1 -pie"
 
 ENV GPG_KEYS 39B641343D8C104B2B146DC3F9C39DC0B9698544 E60913E4DF209907D8E30D96659A97C9CF2A795A 1198C0117593497A5EC5C199286AF1F9897469DC
 
-ENV PHP_VERSION 8.2.10
-ENV PHP_URL="https://www.php.net/distributions/php-8.2.10.tar.xz" PHP_ASC_URL="https://www.php.net/distributions/php-8.2.10.tar.xz.asc"
-ENV PHP_SHA256="561dc4acd5386e47f25be76f2c8df6ae854756469159248313bcf276e282fbb3"
+ENV PHP_VERSION 8.2.16
+ENV PHP_URL="https://www.php.net/distributions/php-8.2.16.tar.xz" PHP_ASC_URL="https://www.php.net/distributions/php-8.2.16.tar.xz.asc"
+ENV PHP_SHA256="28cdc995b7d5421711c7044294885fcde4390c9f67504a994b4cf9bc1b5cc593"
 
 RUN set -eux; \
 	\
@@ -117,6 +117,9 @@ RUN set -eux; \
 		CFLAGS="$PHP_CFLAGS" \
 		CPPFLAGS="$PHP_CPPFLAGS" \
 		LDFLAGS="$PHP_LDFLAGS" \
+# https://github.com/php/php-src/blob/d6299206dd828382753453befd1b915491b741c6/configure.ac#L1496-L1511
+		PHP_BUILD_PROVIDER='https://github.com/docker-library/php' \
+		PHP_UNAME='Linux - Docker' \
 	; \
 	docker-php-source extract; \
 	cd /usr/src/php; \
@@ -140,8 +143,6 @@ RUN set -eux; \
 # https://github.com/docker-library/php/issues/822
 		--with-pic \
 		\
-# --enable-ftp is included here because ftp_ssl_connect() needs ftp to be compiled statically (see https://github.com/docker-library/php/issues/236)
-		--enable-ftp \
 # --enable-mbstring is included here because otherwise there's no way to get pecl to use it properly (see https://github.com/docker-library/php/issues/195)
 		--enable-mbstring \
 # --enable-mysqlnd is included here because it's harder to compile after the fact than extensions are (since it's a plugin for several extensions, not an extension in itself)

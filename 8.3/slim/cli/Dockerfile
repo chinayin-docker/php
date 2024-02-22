@@ -1,15 +1,15 @@
 #
 #--------------------------------------------------------------------------
-# php 8.0 fpm slim
+# php 8.3 cli slim
 #--------------------------------------------------------------------------
 #
 
-FROM chinayin/php:8.0.30-fpm
+FROM chinayin/php:8.3.3-cli
 LABEL maintainer="chinayin <whereismoney@qq.com>"
 
-ENV PHP_VERSION 8.0.30 \
-    CYD_APP_NAME="8.0-fpm-slim" \
-    CYD_IMAGE_VERSION="8.0.30-bullseye-slim"
+ENV PHP_VERSION 8.3.3 \
+    CYD_APP_NAME="8.3-cli-slim" \
+    CYD_IMAGE_VERSION="8.3.3-bookworm-slim"
 
 ## Configure non-root user.
 ARG PUID=1000
