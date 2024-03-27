@@ -60,6 +60,10 @@ RUN set -eux \
     && docker-php-ext-configure redis --enable-redis-igbinary \
     && docker-php-ext-install -j$(nproc) redis \
   ) \
+  ## Composer
+  && ( \
+    curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
+  ) \
   ## Clean up
   && ( \
     docker-php-source delete \
