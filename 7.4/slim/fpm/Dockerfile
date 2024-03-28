@@ -22,7 +22,7 @@ RUN set -eux \
   && docker-php-source extract \
   ## install packages
   && install_packages \
-      curl iputils-ping wget telnet vim apt-utils net-tools procps unzip dnsutils \
+      curl iputils-ping wget telnet vim apt-utils net-tools procps unzip dnsutils tree \
       libssl-dev libmcrypt-dev libzip-dev \
   ## install all required dependencies
   && install_packages \
