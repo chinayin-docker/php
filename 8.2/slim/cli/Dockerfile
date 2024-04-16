@@ -4,12 +4,12 @@
 #--------------------------------------------------------------------------
 #
 
-FROM chinayin/php:8.2.16-cli
+FROM chinayin/php:8.2.18-cli
 LABEL maintainer="chinayin <whereismoney@qq.com>"
 
-ENV PHP_VERSION 8.2.16 \
+ENV PHP_VERSION 8.2.18 \
     CYD_APP_NAME="8.2-cli-slim" \
-    CYD_IMAGE_VERSION="8.2.16-bookworm-slim"
+    CYD_IMAGE_VERSION="8.2.18-bookworm-slim"
 
 ## Configure non-root user.
 ARG PUID=1000
