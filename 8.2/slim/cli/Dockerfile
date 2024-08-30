@@ -67,7 +67,7 @@ RUN set -eux \
   ## git \
   && ( \
     install_packages git \
-    && git -v \
+    && git --version \
   ) \
   ## Clean up
   && ( \
