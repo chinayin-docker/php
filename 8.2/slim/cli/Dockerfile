@@ -64,6 +64,11 @@ RUN set -eux \
   && ( \
     curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
   ) \
+  ## git \
+  && ( \
+    install_packages git \
+    git -v \
+  ) \
   ## Clean up
   && ( \
     docker-php-source delete \
