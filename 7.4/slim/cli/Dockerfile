@@ -64,10 +64,9 @@ RUN set -eux \
   && ( \
     curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
   ) \
-  ## git \
+  ## git
   && ( \
     install_packages git \
-    && git --version \
   ) \
   ## Clean up
   && ( \
@@ -76,5 +75,9 @@ RUN set -eux \
     && rm -rf /tmp/* /var/tmp/* \
     && rm -f /var/log/lastlog /var/log/faillog \
   ) \
-  ## Check PHP version
-  && php -v
+  ## Check version
+  && ( \
+    php -v \
+    && composer -V \
+    && git --version \
+  )
