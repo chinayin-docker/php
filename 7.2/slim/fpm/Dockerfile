@@ -7,7 +7,7 @@
 FROM chinayin/php:7.2.34-fpm
 LABEL maintainer="chinayin <whereismoney@qq.com>"
 
-ENV PHP_VERSION 7.2.34 \
+ENV PHP_VERSION=7.2.34 \
     CYD_APP_NAME="7.2-fpm-slim" \
     CYD_IMAGE_VERSION="7.2.34-bullseye-slim"
 
@@ -25,14 +25,13 @@ RUN set -eux \
       curl iputils-ping wget telnet vim apt-utils net-tools procps unzip dnsutils \
       libssl-dev libmcrypt-dev libzip-dev \
   ## install all required dependencies
-  && install_packages \
     # uuid
       uuid-dev  \
     # memcached
       libmemcached-dev libsasl2-dev libsasl2-modules \
   ## install extensions
   && docker-php-ext-install -j$(nproc) pdo_mysql fileinfo exif zip bcmath \
-  ## ext-opcache \
+  ## ext-opcache
   && ( \
     docker-php-ext-configure opcache --enable-opcache \
     && docker-php-ext-install -j$(nproc) opcache \

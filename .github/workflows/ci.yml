@@ -64,7 +64,7 @@ jobs:
         working-directory: ${{ matrix.major }}/${{ matrix.os }}/${{ matrix.variant }}
         run: |
           echo "repository=${GITHUB_ACTOR}/$(basename ${GITHUB_REPOSITORY})" >> $GITHUB_OUTPUT
-          echo "version=$(grep -oE 'PHP_VERSION [0-9].[0-9]+.[0-9]+' Dockerfile | grep -oE '[0-9].[0-9]+.[0-9]+')" >> $GITHUB_OUTPUT
+          echo "version=$(grep -oE 'PHP_VERSION=[0-9].[0-9]+.[0-9]+' Dockerfile | grep -oE '[0-9].[0-9]+.[0-9]+')" >> $GITHUB_OUTPUT
           echo "workdir=${{ matrix.major }}/${{ matrix.os }}/${{ matrix.variant }}" >> $GITHUB_OUTPUT
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3

@@ -7,7 +7,7 @@
 FROM chinayin/php:7.4.33-fpm
 LABEL maintainer="chinayin <whereismoney@qq.com>"
 
-ENV PHP_VERSION 7.4.33 \
+ENV PHP_VERSION=7.4.33 \
     CYD_APP_NAME="7.4-fpm-slim" \
     CYD_IMAGE_VERSION="7.4.33-bullseye-slim"
 
@@ -25,16 +25,17 @@ RUN set -eux \
       curl iputils-ping wget telnet vim apt-utils net-tools procps unzip dnsutils tree \
       libssl-dev libmcrypt-dev libzip-dev \
   ## install all required dependencies
-  && install_packages \
-    # yaml \
+    # yaml
       libyaml-dev \
     # uuid
       uuid-dev  \
     # memcached
       libmemcached-dev libsasl2-dev libsasl2-modules \
+    # intl
+      libicu-dev \
   ## install extensions
   && docker-php-ext-install -j$(nproc) pdo_mysql fileinfo exif zip bcmath \
-  ## ext-opcache \
+  ## ext-opcache
   && ( \
     docker-php-ext-configure opcache --enable-opcache \
     && docker-php-ext-install -j$(nproc) opcache \
@@ -44,6 +45,12 @@ RUN set -eux \
   && pecl install yaml && docker-php-ext-enable yaml \
   ## ext-uuid
   && pecl install uuid && docker-php-ext-enable uuid \
+  ## ext-intl
+  && ( \
+    docker-php-ext-configure intl \
+    && docker-php-ext-install -j$(nproc) intl \
+    && docker-php-ext-enable intl \
+  ) \
   ## ext-memcached
   && ( \
     pecl install igbinary msgpack \
@@ -64,7 +71,7 @@ RUN set -eux \
   && ( \
     curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
   ) \
-  ## git \
+  ## git
   && ( \
     install_packages git \
   ) \

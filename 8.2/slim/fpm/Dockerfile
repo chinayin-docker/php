@@ -4,12 +4,12 @@
 #--------------------------------------------------------------------------
 #
 
-FROM chinayin/php:8.2.22-fpm
+FROM chinayin/php:8.2.28-fpm
 LABEL maintainer="chinayin <whereismoney@qq.com>"
 
-ENV PHP_VERSION 8.2.22 \
+ENV PHP_VERSION=8.2.28 \
     CYD_APP_NAME="8.2-fpm-slim" \
-    CYD_IMAGE_VERSION="8.2.18-bookworm-slim"
+    CYD_IMAGE_VERSION="8.2.28-bookworm-slim"
 
 ## Configure non-root user.
 ARG PUID=1000
@@ -25,7 +25,6 @@ RUN set -eux \
       curl iputils-ping wget telnet vim apt-utils net-tools procps unzip dnsutils tree \
       libssl-dev libmcrypt-dev libzip-dev \
   ## install all required dependencies
-  && install_packages \
     # yaml \
       libyaml-dev \
     # uuid
@@ -34,7 +33,7 @@ RUN set -eux \
       libmemcached-dev libsasl2-dev libsasl2-modules \
   ## install extensions
   && docker-php-ext-install -j$(nproc) pdo_mysql fileinfo exif zip bcmath \
-  ## ext-opcache \
+  ## ext-opcache
   && ( \
     docker-php-ext-configure opcache --enable-opcache \
     && docker-php-ext-install -j$(nproc) opcache \
@@ -64,7 +63,7 @@ RUN set -eux \
   && ( \
     curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
   ) \
-  ## git \
+  ## git
   && ( \
     install_packages git \
   ) \
