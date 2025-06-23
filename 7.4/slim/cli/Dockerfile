@@ -31,6 +31,10 @@ RUN set -eux \
       uuid-dev  \
     # memcached
       libmemcached-dev libsasl2-dev libsasl2-modules \
+    # intl
+      libicu-dev \
+    # gmp
+      libgmp-dev \
   ## install extensions
   && docker-php-ext-install -j$(nproc) pdo_mysql fileinfo exif zip bcmath gmp \
   ## ext-opcache
@@ -43,6 +47,12 @@ RUN set -eux \
   && pecl install yaml && docker-php-ext-enable yaml \
   ## ext-uuid
   && pecl install uuid && docker-php-ext-enable uuid \
+  ## ext-intl
+  && ( \
+    docker-php-ext-configure intl \
+    && docker-php-ext-install -j$(nproc) intl \
+    && docker-php-ext-enable intl \
+  ) \
   ## ext-memcached
   && ( \
     pecl install igbinary msgpack \

@@ -25,14 +25,14 @@ RUN set -eux \
       curl iputils-ping wget telnet vim apt-utils net-tools procps unzip dnsutils tree \
       libssl-dev libmcrypt-dev libzip-dev \
   ## install all required dependencies
-    # yaml \
+    # yaml
       libyaml-dev \
     # uuid
       uuid-dev  \
     # memcached
       libmemcached-dev libsasl2-dev libsasl2-modules \
   ## install extensions
-  && docker-php-ext-install -j$(nproc) pdo_mysql fileinfo exif zip bcmath gmp \
+  && docker-php-ext-install -j$(nproc) pdo_mysql fileinfo exif zip bcmath \
   ## ext-opcache
   && ( \
     docker-php-ext-configure opcache --enable-opcache \

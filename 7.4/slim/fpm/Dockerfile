@@ -33,6 +33,8 @@ RUN set -eux \
       libmemcached-dev libsasl2-dev libsasl2-modules \
     # intl
       libicu-dev \
+    # gmp
+      libgmp-dev \
   ## install extensions
   && docker-php-ext-install -j$(nproc) pdo_mysql fileinfo exif zip bcmath gmp \
   ## ext-opcache
