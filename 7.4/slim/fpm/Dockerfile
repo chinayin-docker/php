@@ -34,7 +34,7 @@ RUN set -eux \
     # intl
       libicu-dev \
   ## install extensions
-  && docker-php-ext-install -j$(nproc) pdo_mysql fileinfo exif zip bcmath \
+  && docker-php-ext-install -j$(nproc) pdo_mysql fileinfo exif zip bcmath gmp \
   ## ext-opcache
   && ( \
     docker-php-ext-configure opcache --enable-opcache \

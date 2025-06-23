@@ -32,7 +32,7 @@ RUN set -eux \
     # memcached
       libmemcached-dev libsasl2-dev libsasl2-modules \
   ## install extensions
-  && docker-php-ext-install -j$(nproc) pdo_mysql fileinfo exif zip bcmath \
+  && docker-php-ext-install -j$(nproc) pdo_mysql fileinfo exif zip bcmath gmp \
   ## ext-opcache
   && ( \
     docker-php-ext-configure opcache --enable-opcache \
