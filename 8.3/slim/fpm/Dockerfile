@@ -4,12 +4,12 @@
 #--------------------------------------------------------------------------
 #
 
-FROM chinayin/php:8.3.21-fpm
+FROM chinayin/php:8.3.22-fpm
 LABEL maintainer="chinayin <whereismoney@qq.com>"
 
-ENV PHP_VERSION=8.3.21 \
+ENV PHP_VERSION=8.3.22 \
     CYD_APP_NAME="8.3-fpm-slim" \
-    CYD_IMAGE_VERSION="8.3.21-bookworm-slim"
+    CYD_IMAGE_VERSION="8.3.22-bookworm-slim"
 
 ## Configure non-root user.
 ARG PUID=1000
@@ -33,12 +33,6 @@ RUN set -eux \
       libmemcached-dev libsasl2-dev libsasl2-modules \
   ## install extensions
   && docker-php-ext-install -j$(nproc) pdo_mysql fileinfo exif zip bcmath \
-  ## ext-opcache
-  && ( \
-    docker-php-ext-configure opcache --enable-opcache \
-    && docker-php-ext-install -j$(nproc) opcache \
-    && echo "opcache.enable=0" >> "$PHP_INI_DIR/conf.d/docker-php-ext-opcache.ini" \
-  ) \
   ## ext-yaml
   && pecl install yaml && docker-php-ext-enable yaml \
   ## ext-uuid
