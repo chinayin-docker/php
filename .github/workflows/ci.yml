@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        major: [ 7.4, 8.2, 8.3 ]
+        major: [ 7.4, 8.2, 8.3, 8.4 ]
         os: [ debian ]
         variant: [ fpm, cli ]
     steps:
@@ -53,7 +53,7 @@ jobs:
     needs: build
     strategy:
       matrix:
-        major: [ 7.4, 8.2, 8.3 ]
+        major: [ 7.4, 8.2, 8.3, 8.4 ]
         os: [ slim ]
         variant: [ fpm, cli ]
     steps:
