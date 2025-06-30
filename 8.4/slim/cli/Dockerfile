@@ -1,15 +1,15 @@
 #
 #--------------------------------------------------------------------------
-# php 8.2 fpm slim
+# php 8.4 cli slim
 #--------------------------------------------------------------------------
 #
 
-FROM chinayin/php:8.2.28-fpm
+FROM chinayin/php:8.4.8-cli
 LABEL maintainer="chinayin <whereismoney@qq.com>"
 
-ENV PHP_VERSION=8.2.28 \
-    CYD_APP_NAME="8.2-fpm-slim" \
-    CYD_IMAGE_VERSION="8.2.28-bookworm-slim"
+ENV PHP_VERSION=8.4.8 \
+    CYD_APP_NAME="8.4-cli-slim" \
+    CYD_IMAGE_VERSION="8.4.8-bookworm-slim"
 
 ## Configure non-root user.
 ARG PUID=1000
@@ -22,7 +22,7 @@ RUN set -eux \
   && docker-php-source extract \
   ## install packages
   && install_packages \
-      curl iputils-ping wget telnet vim apt-utils net-tools procps unzip dnsutils tree \
+      curl iputils-ping wget telnet vim apt-utils net-tools procps unzip dnsutils \
       libssl-dev libmcrypt-dev libzip-dev \
   ## install all required dependencies
     # yaml

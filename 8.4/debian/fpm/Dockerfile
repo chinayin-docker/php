@@ -1,6 +1,6 @@
 #
 #--------------------------------------------------------------------------
-# php 8.3 fpm
+# php 8.4 fpm
 #--------------------------------------------------------------------------
 #
 
@@ -58,11 +58,11 @@ ENV PHP_CFLAGS="-fstack-protector-strong -fpic -fpie -O2 -D_LARGEFILE_SOURCE -D_
 ENV PHP_CPPFLAGS="$PHP_CFLAGS"
 ENV PHP_LDFLAGS="-Wl,-O1 -pie"
 
-ENV GPG_KEYS 1198C0117593497A5EC5C199286AF1F9897469DC C28D937575603EB4ABB725861C0779DC5C0A9DE4 AFD8691FDAEDF03BDF6E460563F15A9B715376CA
+ENV GPG_KEYS AFD8691FDAEDF03BDF6E460563F15A9B715376CA 9D7F99A0CB8F05C8A6958D6256A97AF7600A39A6 0616E93D95AF471243E26761770426E17EBBB3DD
 
-ENV PHP_VERSION 8.3.22
-ENV PHP_URL="https://www.php.net/distributions/php-8.3.22.tar.xz" PHP_ASC_URL="https://www.php.net/distributions/php-8.3.22.tar.xz.asc"
-ENV PHP_SHA256="66c86889059bd27ccf460590ca48fcaf3261349cc9bdba2023ac6a265beabf36"
+ENV PHP_VERSION 8.4.8
+ENV PHP_URL="https://www.php.net/distributions/php-8.4.8.tar.xz" PHP_ASC_URL="https://www.php.net/distributions/php-8.4.8.tar.xz.asc"
+ENV PHP_SHA256="aa6a4d330b47eacd83e351658ba8c47747a1e4356456219cfb6d75e7838da091"
 
 RUN set -eux; \
 	\

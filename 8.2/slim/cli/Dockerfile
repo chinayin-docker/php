@@ -33,12 +33,6 @@ RUN set -eux \
       libmemcached-dev libsasl2-dev libsasl2-modules \
   ## install extensions
   && docker-php-ext-install -j$(nproc) pdo_mysql fileinfo exif zip bcmath \
-  ## ext-opcache
-  && ( \
-    docker-php-ext-configure opcache --enable-opcache \
-    && docker-php-ext-install -j$(nproc) opcache \
-    && echo "opcache.enable=0" >> "$PHP_INI_DIR/conf.d/docker-php-ext-opcache.ini" \
-  ) \
   ## ext-yaml
   && pecl install yaml && docker-php-ext-enable yaml \
   ## ext-uuid
