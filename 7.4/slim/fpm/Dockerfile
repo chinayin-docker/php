@@ -17,6 +17,18 @@ ARG PGID=1000
 ENV PUID=${PUID} PGID=${PGID}
 RUN groupmod -o -g ${PGID} www-data && usermod -o -u ${PUID} -g www-data www-data
 
+# 修复 PEAR 1.10.x 不解 Transfer-Encoding: chunked 的问题。
+# pecl.php.net 的 CDN 对 HTTP/1.1 请求返回 chunked 响应，PEAR 不做解块，
+# 把 "288\r\n<?xml ..." 原样交给 XML 解析器，于是报
+#   XML Error: 'Not well-formed (invalid token)' on line '1'
+# 并把 pecl install 变成 "No releases available for package"。
+# 改用 HTTP/1.0 请求：此时服务端以 Connection: close 定界，不再 chunked。
+RUN set -eux; \
+    sed -i 's|GET $requestPath HTTP/1.1|GET $requestPath HTTP/1.0|' /usr/local/lib/php/PEAR/Downloader.php; \
+    sed -i 's|GET $url HTTP/1.1|GET $url HTTP/1.0|;s|GET $path HTTP/1.1|GET $path HTTP/1.0|' /usr/local/lib/php/PEAR/REST.php; \
+    grep -q 'GET $requestPath HTTP/1.0' /usr/local/lib/php/PEAR/Downloader.php; \
+    grep -q 'GET $path HTTP/1.0' /usr/local/lib/php/PEAR/REST.php
+
 RUN set -eux \
   && pecl channel-update pecl.php.net \
   && docker-php-source extract \

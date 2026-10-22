@@ -1,0 +1,135 @@
+name: Slim Image Verify
+
+# 仅用于验证 slim 变体的构建，独立于主 CI（Docker Image CI）。
+# 不推送镜像、只构建 amd64，避免触发全量多架构打包。
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'PHP version directory to build'
+        type: choice
+        options:
+          - '7.4'
+          - '8.2'
+          - '8.4'
+          - all
+        default: '7.4'
+  pull_request:
+    paths:
+      - '*/slim/*/Dockerfile'
+      - '.github/workflows/slim-verify.yml'
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+      # job 级 if 里不能引用 matrix（matrix 展开在 job 级 if 之后），
+      # 所以这里先生成矩阵。pull_request 或 version=all 时跑全部版本。
+      - name: Build matrix
+        id: set
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [ -z "${VERSION}" ] || [ "${VERSION}" = "all" ]; then
+            majors='["7.4","8.2","8.4"]'
+          else
+            majors="[\"${VERSION}\"]"
+          fi
+          echo "matrix={\"major\":${majors},\"variant\":[\"fpm\",\"cli\"]}" >> "$GITHUB_OUTPUT"
+          echo "selected: ${majors}"
+
+  verify:
+    name: slim (${{ matrix.major }}, ${{ matrix.variant }})
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set variables
+        id: vars
+        working-directory: ${{ matrix.major }}/slim/${{ matrix.variant }}
+        run: |
+          version=$(grep -oE 'PHP_VERSION=[0-9.]+' Dockerfile | head -1 | cut -d= -f2)
+          base=$(grep -oE '^FROM [^ ]+' Dockerfile | head -1 | cut -d' ' -f2)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          echo "workdir=${{ matrix.major }}/slim/${{ matrix.variant }}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # slim 的上下文是 <ver>/slim/<variant>，需要把公共构建脚本拷进去
+      - name: Copy build helpers
+        run: |
+          cp -f files/docker-php-ext-* "${{ steps.vars.outputs.workdir }}"
+          cp -f files/docker-php-source "${{ steps.vars.outputs.workdir }}"
+          cp -f files/docker-php-entrypoint-${{ matrix.variant }} \
+                "${{ steps.vars.outputs.workdir }}/docker-php-entrypoint"
+          tree "${{ steps.vars.outputs.workdir }}"
+
+      # base 镜像（chinayin/php:<ver>-<variant>）已由主 CI 发布，直接 FROM 拉取
+      - name: Build slim image (amd64, no push)
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ steps.vars.outputs.workdir }}
+          pull: true
+          push: false
+          load: true
+          platforms: linux/amd64
+          tags: slim-verify:${{ matrix.major }}-${{ matrix.variant }}
+
+      - name: Assert image content
+        run: |
+          set -eux
+          img="slim-verify:${{ matrix.major }}-${{ matrix.variant }}"
+          echo "base declared in Dockerfile: ${{ steps.vars.outputs.base }}"
+          echo "--- php version ---"
+          docker run --rm --entrypoint php "$img" -v | head -1
+          echo "--- extensions ---"
+          docker run --rm --entrypoint php "$img" -m | tee /tmp/ext.txt
+
+          # 本次修复的核心：这些扩展全部经由 pecl 安装（修复前必然全部失败）
+          echo "--- pecl-installed extensions (heart of this fix) ---"
+          missing=0
+          for ext in yaml uuid igbinary msgpack memcached redis; do
+            if grep -qix "$ext" /tmp/ext.txt; then
+              echo "OK   $ext"
+            else
+              echo "MISS $ext"
+              missing=1
+            fi
+          done
+
+          # 各版本 slim 都装的编译型扩展
+          echo "--- core extensions ---"
+          for ext in pdo_mysql zip bcmath; do
+            if grep -qix "$ext" /tmp/ext.txt; then
+              echo "OK   $ext"
+            else
+              echo "MISS $ext"
+              missing=1
+            fi
+          done
+
+          # opcache 在 php -m 中显示为 "Zend OPcache"
+          if grep -qi 'opcache' /tmp/ext.txt; then
+            echo "OK   opcache (Zend OPcache)"
+          else
+            echo "MISS opcache"
+            missing=1
+          fi
+
+          echo "--- composer (informational) ---"
+          docker run --rm -e HOME=/tmp --entrypoint sh "$img" -c 'composer -V' || true
+
+          test "$missing" -eq 0
