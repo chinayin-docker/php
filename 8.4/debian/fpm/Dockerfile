@@ -3,8 +3,7 @@
 # php 8.4 fpm
 #--------------------------------------------------------------------------
 #
-
-FROM chinayin/debian:bookworm-slim
+FROM chinayin/debian:trixie-slim
 
 # prevent Debian's PHP packages from being installed
 # https://github.com/docker-library/php/pull/542
@@ -37,7 +36,7 @@ RUN set -eux; \
 		curl \
 		xz-utils \
 	; \
-	rm -rf /var/lib/apt/lists/*
+	apt-get dist-clean
 
 ENV PHP_INI_DIR /usr/local/etc/php
 RUN set -eux; \
@@ -60,16 +59,16 @@ ENV PHP_LDFLAGS="-Wl,-O1 -pie"
 
 ENV GPG_KEYS AFD8691FDAEDF03BDF6E460563F15A9B715376CA 9D7F99A0CB8F05C8A6958D6256A97AF7600A39A6 0616E93D95AF471243E26761770426E17EBBB3DD
 
-ENV PHP_VERSION 8.4.8
-ENV PHP_URL="https://www.php.net/distributions/php-8.4.8.tar.xz" PHP_ASC_URL="https://www.php.net/distributions/php-8.4.8.tar.xz.asc"
-ENV PHP_SHA256="aa6a4d330b47eacd83e351658ba8c47747a1e4356456219cfb6d75e7838da091"
+ENV PHP_VERSION 8.4.27
+ENV PHP_URL="https://www.php.net/distributions/php-8.4.27.tar.xz" PHP_ASC_URL="https://www.php.net/distributions/php-8.4.27.tar.xz.asc"
+ENV PHP_SHA256="dcf93923b0e38e0d5252b25b796520b5a47761a08b3488b6d0b5d1115764d3f0"
 
 RUN set -eux; \
 	\
 	savedAptMark="$(apt-mark showmanual)"; \
 	apt-get update; \
 	apt-get install -y --no-install-recommends gnupg; \
-	rm -rf /var/lib/apt/lists/*; \
+	apt-get dist-clean; \
 	\
 	mkdir -p /usr/src; \
 	cd /usr/src; \
@@ -80,16 +79,14 @@ RUN set -eux; \
 		echo "$PHP_SHA256 *php.tar.xz" | sha256sum -c -; \
 	fi; \
 	\
-	if [ -n "$PHP_ASC_URL" ]; then \
-		curl -fsSL -o php.tar.xz.asc "$PHP_ASC_URL"; \
-		export GNUPGHOME="$(mktemp -d)"; \
-		for key in $GPG_KEYS; do \
-			gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key"; \
-		done; \
-		gpg --batch --verify php.tar.xz.asc php.tar.xz; \
-		gpgconf --kill all; \
-		rm -rf "$GNUPGHOME"; \
-	fi; \
+	curl -fsSL -o php.tar.xz.asc "$PHP_ASC_URL"; \
+	export GNUPGHOME="$(mktemp -d)"; \
+	for key in $GPG_KEYS; do \
+		gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key"; \
+	done; \
+	gpg --batch --verify php.tar.xz.asc php.tar.xz; \
+	gpgconf --kill all; \
+	rm -rf "$GNUPGHOME"; \
 	\
 	apt-mark auto '.*' > /dev/null; \
 	apt-mark manual $savedAptMark > /dev/null; \
@@ -129,8 +126,21 @@ RUN set -eux; \
 	if [ ! -d /usr/include/curl ]; then \
 		ln -sT "/usr/include/$debMultiarch/curl" /usr/local/include/curl; \
 	fi; \
+	case "$gnuArch" in \
+		'i686-linux-'*) \
+			# php zend jit assumes SSE registers, xmm0-7, are available (and "Pentium4"/SSE2 is a reasonable baseline)
+			# https://github.com/php/php-src/pull/22832
+			# so, allow it and use SSE/SSE2 floating-point unit instead of the legacy stack
+			export \
+				CFLAGS="$CFLAGS -msse2 -mfpmath=sse" \
+				CPPFLAGS="$CPPFLAGS -msse2 -mfpmath=sse" \
+			; \
+			;; \
+	esac; \
+	test "$PHP_INI_DIR" != "${PHP_INI_DIR%/php}"; \
 	./configure \
 		--build="$gnuArch" \
+		--sysconfdir="${PHP_INI_DIR%/php}" \
 		--with-config-file-path="$PHP_INI_DIR" \
 		--with-config-file-scan-dir="$PHP_INI_DIR/conf.d" \
 		\
@@ -200,13 +210,14 @@ RUN set -eux; \
 	find /usr/local -type f -executable -exec ldd '{}' ';' \
 		| awk '/=>/ { so = $(NF-1); if (index(so, "/usr/local/") == 1) { next }; gsub("^/(usr/)?", "", so); printf "*%s\n", so }' \
 		| sort -u \
-		| xargs -r dpkg-query --search \
-		| cut -d: -f1 \
+		| xargs -rt dpkg-query --search \
+# https://manpages.debian.org/trixie/dpkg/dpkg-query.1.en.html#S (we ignore diversions and it'll be really unusual for more than one package to provide any given .so file)
+		| awk 'sub(":$", "", $1) { print $1 }' \
 		| sort -u \
 		| xargs -r apt-mark manual \
 	; \
 	apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
-	rm -rf /var/lib/apt/lists/*; \
+	apt-get dist-clean; \
 	\
 # update pecl channel definitions https://github.com/docker-library/php/issues/443
 	pecl update-channels; \
@@ -227,20 +238,16 @@ ENTRYPOINT ["docker-php-entrypoint"]
 WORKDIR /var/www/html
 
 RUN set -eux; \
-	cd /usr/local/etc; \
-	if [ -d php-fpm.d ]; then \
-		# for some reason, upstream's php-fpm.conf.default has "include=NONE/etc/php-fpm.d/*.conf"
-		sed 's!=NONE/!=!g' php-fpm.conf.default | tee php-fpm.conf > /dev/null; \
-		cp php-fpm.d/www.conf.default php-fpm.d/www.conf; \
-	else \
-		# PHP 5.x doesn't use "include=" by default, so we'll create our own simple config that mimics PHP 7+ for consistency
-		mkdir php-fpm.d; \
-		cp php-fpm.conf.default php-fpm.d/www.conf; \
-		{ \
-			echo '[global]'; \
-			echo 'include=etc/php-fpm.d/*.conf'; \
-		} | tee php-fpm.conf; \
-	fi; \
+	cd "${PHP_INI_DIR%/php}"; \
+	\
+	cp -v php-fpm.conf.default php-fpm.conf; \
+	cp -v php-fpm.d/www.conf.default php-fpm.d/www.conf; \
+	\
+	# comment out localhost-only listen address
+	grep -E '^listen = 127.0.0.1:9000' php-fpm.d/www.conf; \
+	sed -ri 's/^(listen = 127.0.0.1:9000)/;\1/' php-fpm.d/www.conf; \
+	grep -E '^;listen = 127.0.0.1:9000' php-fpm.d/www.conf; \
+	\
 	{ \
 		echo '[global]'; \
 		echo 'error_log = /proc/self/fd/2'; \
@@ -256,13 +263,16 @@ RUN set -eux; \
 		echo '; Ensure worker stdout and stderr are sent to the main error log.'; \
 		echo 'catch_workers_output = yes'; \
 		echo 'decorate_workers_output = no'; \
+		echo; \
+		echo '; default listen address for easy override in later php-fpm.d/*.conf files'; \
+		echo 'listen = 9000'; \
 	} | tee php-fpm.d/docker.conf; \
 	{ \
 		echo '[global]'; \
 		echo 'daemonize = no'; \
 		echo; \
+		echo '; the [www] ini section below is for backwards compatibility and will be removed in 8.6+'; \
 		echo '[www]'; \
-		echo 'listen = 9000'; \
 	} | tee php-fpm.d/zz-docker.conf; \
 	mkdir -p "$PHP_INI_DIR/conf.d"; \
 	{ \

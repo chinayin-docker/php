@@ -3,8 +3,7 @@
 # php 8.2 cli
 #--------------------------------------------------------------------------
 #
-
-FROM chinayin/debian:bookworm-slim
+FROM chinayin/debian:trixie-slim
 
 # prevent Debian's PHP packages from being installed
 # https://github.com/docker-library/php/pull/542
@@ -37,7 +36,7 @@ RUN set -eux; \
 		curl \
 		xz-utils \
 	; \
-	rm -rf /var/lib/apt/lists/*
+	apt-get dist-clean
 
 ENV PHP_INI_DIR /usr/local/etc/php
 RUN set -eux; \
@@ -60,16 +59,16 @@ ENV PHP_LDFLAGS="-Wl,-O1 -pie"
 
 ENV GPG_KEYS 39B641343D8C104B2B146DC3F9C39DC0B9698544 E60913E4DF209907D8E30D96659A97C9CF2A795A 1198C0117593497A5EC5C199286AF1F9897469DC
 
-ENV PHP_VERSION 8.2.28
-ENV PHP_URL="https://www.php.net/distributions/php-8.2.28.tar.xz" PHP_ASC_URL="https://www.php.net/distributions/php-8.2.28.tar.xz.asc"
-ENV PHP_SHA256="af8c9153153a7f489153b7a74f2f29a5ee36f5cb2c6c6929c98411a577e89c91"
+ENV PHP_VERSION 8.2.35
+ENV PHP_URL="https://www.php.net/distributions/php-8.2.35.tar.xz" PHP_ASC_URL="https://www.php.net/distributions/php-8.2.35.tar.xz.asc"
+ENV PHP_SHA256="5737b98601fe5ab1b8c5db0c82ed3158acb9283ed3081ffe2faffb9ac81455e6"
 
 RUN set -eux; \
 	\
 	savedAptMark="$(apt-mark showmanual)"; \
 	apt-get update; \
 	apt-get install -y --no-install-recommends gnupg; \
-	rm -rf /var/lib/apt/lists/*; \
+	apt-get dist-clean; \
 	\
 	mkdir -p /usr/src; \
 	cd /usr/src; \
@@ -80,16 +79,14 @@ RUN set -eux; \
 		echo "$PHP_SHA256 *php.tar.xz" | sha256sum -c -; \
 	fi; \
 	\
-	if [ -n "$PHP_ASC_URL" ]; then \
-		curl -fsSL -o php.tar.xz.asc "$PHP_ASC_URL"; \
-		export GNUPGHOME="$(mktemp -d)"; \
-		for key in $GPG_KEYS; do \
-			gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key"; \
-		done; \
-		gpg --batch --verify php.tar.xz.asc php.tar.xz; \
-		gpgconf --kill all; \
-		rm -rf "$GNUPGHOME"; \
-	fi; \
+	curl -fsSL -o php.tar.xz.asc "$PHP_ASC_URL"; \
+	export GNUPGHOME="$(mktemp -d)"; \
+	for key in $GPG_KEYS; do \
+		gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key"; \
+	done; \
+	gpg --batch --verify php.tar.xz.asc php.tar.xz; \
+	gpgconf --kill all; \
+	rm -rf "$GNUPGHOME"; \
 	\
 	apt-mark auto '.*' > /dev/null; \
 	apt-mark manual $savedAptMark > /dev/null; \
@@ -129,8 +126,21 @@ RUN set -eux; \
 	if [ ! -d /usr/include/curl ]; then \
 		ln -sT "/usr/include/$debMultiarch/curl" /usr/local/include/curl; \
 	fi; \
+	case "$gnuArch" in \
+		'i686-linux-'*) \
+			# php zend jit assumes SSE registers, xmm0-7, are available (and "Pentium4"/SSE2 is a reasonable baseline)
+			# https://github.com/php/php-src/pull/22832
+			# so, allow it and use SSE/SSE2 floating-point unit instead of the legacy stack
+			export \
+				CFLAGS="$CFLAGS -msse2 -mfpmath=sse" \
+				CPPFLAGS="$CPPFLAGS -msse2 -mfpmath=sse" \
+			; \
+			;; \
+	esac; \
+	test "$PHP_INI_DIR" != "${PHP_INI_DIR%/php}"; \
 	./configure \
 		--build="$gnuArch" \
+		--sysconfdir="${PHP_INI_DIR%/php}" \
 		--with-config-file-path="$PHP_INI_DIR" \
 		--with-config-file-scan-dir="$PHP_INI_DIR/conf.d" \
 		\
@@ -202,13 +212,14 @@ RUN set -eux; \
 	find /usr/local -type f -executable -exec ldd '{}' ';' \
 		| awk '/=>/ { so = $(NF-1); if (index(so, "/usr/local/") == 1) { next }; gsub("^/(usr/)?", "", so); printf "*%s\n", so }' \
 		| sort -u \
-		| xargs -r dpkg-query --search \
-		| cut -d: -f1 \
+		| xargs -rt dpkg-query --search \
+# https://manpages.debian.org/trixie/dpkg/dpkg-query.1.en.html#S (we ignore diversions and it'll be really unusual for more than one package to provide any given .so file)
+		| awk 'sub(":$", "", $1) { print $1 }' \
 		| sort -u \
 		| xargs -r apt-mark manual \
 	; \
 	apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
-	rm -rf /var/lib/apt/lists/*; \
+	apt-get dist-clean; \
 	\
 # update pecl channel definitions https://github.com/docker-library/php/issues/443
 	pecl update-channels; \
