@@ -4,7 +4,7 @@
 #--------------------------------------------------------------------------
 #
 
-FROM chinayin/debian:bullseye-slim
+FROM chinayin/debian:bookworm-slim
 
 # prevent Debian's PHP packages from being installed
 # https://github.com/docker-library/php/pull/542
@@ -25,6 +25,7 @@ ENV PHPIZE_DEPS \
 		gcc \
 		libc-dev \
 		make \
+		patch \
 		pkg-config \
 		re2c
 
@@ -60,7 +61,8 @@ ENV PHP_LDFLAGS="-Wl,-O1 -pie"
 
 ENV GPG_KEYS 42670A7FE4D0441C8E4632349E4FDC074A4EF02D 5A52880781F755608BF815FC910DEB46F53EA312
 
-ENV PHP_VERSION 7.4.33
+# 内部版本号：php-7.4.33 源码 + 官方 CVE-2026-109618/109619 补丁（上游无 7.4.34 tag）
+ENV PHP_VERSION 7.4.34
 ENV PHP_URL="https://www.php.net/distributions/php-7.4.33.tar.xz" PHP_ASC_URL="https://www.php.net/distributions/php-7.4.33.tar.xz.asc"
 ENV PHP_SHA256="924846abf93bc613815c55dd3f5809377813ac62a9ec4eb3778675b82a27b927"
 
@@ -97,6 +99,9 @@ RUN set -eux; \
 
 COPY docker-php-source /usr/local/bin/
 
+COPY patches/ /usr/src/patches/
+RUN set -eux; cd /usr/src/patches && sha256sum -c patches.sha256
+
 RUN set -eux; \
 	\
 	savedAptMark="$(apt-mark showmanual)"; \
@@ -120,6 +125,14 @@ RUN set -eux; \
 	; \
 	docker-php-source extract; \
 	cd /usr/src/php; \
+# 应用官方 EOL 安全补丁（7.4/patches/*.patch，顺序应用）
+	for p in /usr/src/patches/*.patch; do \
+		echo "applying $p"; \
+		patch -p1 --forward --batch --no-backup-if-mismatch < "$p"; \
+	done; \
+# 版本号单一来源：改 AC_INIT，再让 configure 重新生成 main/php_version.h
+	sed -i 's/^AC_INIT(\[PHP\],\[7\.4\.33\]/AC_INIT([PHP],[7.4.34]/' configure.ac; \
+	./buildconf --force; \
 	gnuArch="$(dpkg-architecture --query DEB_BUILD_GNU_TYPE)"; \
 	debMultiarch="$(dpkg-architecture --query DEB_BUILD_MULTIARCH)"; \
 # https://bugs.php.net/bug.php?id=74125
@@ -200,10 +213,10 @@ RUN set -eux; \
 	apt-mark auto '.*' > /dev/null; \
 	[ -z "$savedAptMark" ] || apt-mark manual $savedAptMark; \
 	find /usr/local -type f -executable -exec ldd '{}' ';' \
-		| awk '/=>/ { print $(NF-1) }' \
+		| awk '/=>/ { so = $(NF-1); if (index(so, "/usr/local/") == 1) { next }; gsub("^/(usr/)?", "", so); printf "*%s\n", so }' \
 		| sort -u \
-		| xargs -r dpkg-query --search \
-		| cut -d: -f1 \
+		| xargs -rt dpkg-query --search \
+		| awk 'sub(":$", "", $1) { print $1 }' \
 		| sort -u \
 		| xargs -r apt-mark manual \
 	; \
@@ -214,8 +227,11 @@ RUN set -eux; \
 	pecl update-channels; \
 	rm -rf /tmp/pear ~/.pearrc; \
 	\
-# smoke test
-	php --version
+# smoke test + 安全补丁断言（缺任何一项就让构建失败）
+	php --version; \
+	php -v | grep -qE '^PHP 7\.4\.34 '; \
+	php -i | grep -q '^max_multipart_body_parts'; \
+	echo 'OK: php 7.4.34 with CVE-2026-109618/109619 fix'
 
 COPY docker-php-ext-* docker-php-entrypoint /usr/local/bin/
 

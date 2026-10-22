@@ -37,6 +37,7 @@ jobs:
           cp -f files/docker-php-ext-* ${{ steps.vars.outputs.workdir }}
           cp -f files/docker-php-source ${{ steps.vars.outputs.workdir }}
           cp -f files/docker-php-entrypoint-${{ matrix.variant }} ${{ steps.vars.outputs.workdir }}/docker-php-entrypoint
+          cp -rf ${{ matrix.major }}/patches ${{ steps.vars.outputs.workdir }}/ 2>/dev/null || true
           tree ${{ steps.vars.outputs.workdir }}
       - name: Build and push
         uses: docker/build-push-action@v7
